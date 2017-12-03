@@ -34,6 +34,10 @@
 	return self;
 }
 
+- (void)dealloc {
+	[self.disposable dispose];
+}
+
 - (void)sendNext:(id)value {}
 - (void)sendError:(NSError *)error {}
 - (void)sendCompleted {}
@@ -79,6 +83,20 @@ qck_describe(@"RACSubject", ^{
 		expect(@(subscriber.disposable.disposed)).to(beTruthy());
 	});
 
+	qck_it(@"should release the subscriber after deallocation", ^{
+		RACDisposable *subscriberDisposable;
+		{
+			__attribute__((objc_precise_lifetime)) RACTestSubscriber* subscriber = [RACTestSubscriber new];
+			__attribute__((objc_precise_lifetime)) RACSubject* subject = [RACSubject new];
+
+			subscriberDisposable = subscriber.disposable;
+			
+			[subject subscribe:subscriber];
+		}
+		
+		expect(@(subscriberDisposable.disposed)).to(beTruthy());
+	});
+	
 	qck_itBehavesLike(RACSubscriberExamples, ^{
 		return @{
 			RACSubscriberExampleSubscriber: subject,

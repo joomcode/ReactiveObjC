@@ -61,13 +61,24 @@
 	@synchronized (subscribers) {
 		[subscribers addObject:subscriber];
 	}
-	
+
+    // The disposable shouldn't capture any subscribers.
+    // We can use an unsafe pointer to the `subscriber` because it's used to compare references only.
+    __unsafe_unretained id<RACSubscriber> unsafeSubscriber = subscriber;
+    @weakify(subscribers);
+
 	[disposable addDisposable:[RACDisposable disposableWithBlock:^{
-		@synchronized (subscribers) {
+        @strongify(subscribers);
+
+		if (!subscribers) {
+			return;
+		}
+
+        @synchronized (subscribers) {
 			// Since newer subscribers are generally shorter-lived, search
 			// starting from the end of the list.
 			NSUInteger index = [subscribers indexOfObjectWithOptions:NSEnumerationReverse passingTest:^ BOOL (id<RACSubscriber> obj, NSUInteger index, BOOL *stop) {
-				return obj == subscriber;
+				return obj == unsafeSubscriber;
 			}];
 
 			if (index != NSNotFound) [subscribers removeObjectAtIndex:index];
