@@ -3762,6 +3762,11 @@ qck_describe(@"-finally:", ^{
       [subject sendError:nil];
       expect(@(finallyInvoked)).to(beTruthy());
     });
+
+    qck_it(@"should run finally upon unsubscription", ^{
+	  [disposable dispose];
+      expect(@(finallyInvoked)).to(beTruthy());
+    });
   });
 });
 
